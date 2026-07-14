@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('supplier', function (Blueprint $table) {
             $table->id();
             $table->string('nama_supplier');
-            $table->int('no_telepon');
+            $table->integer('no_telepon');
             $table->text('alamat');
             $table->enum('status', ['aktif', 'nonaktif'])->default('aktif');
             $table->timestamps();
