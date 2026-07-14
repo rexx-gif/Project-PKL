@@ -9,8 +9,9 @@ class Customer extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'id_customer';
+
     protected $fillable = [
-        'kode_customer',
         'nama_customer',
         'alamat',
         'no_telp',
