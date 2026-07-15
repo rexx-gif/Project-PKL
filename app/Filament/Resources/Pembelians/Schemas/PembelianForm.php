@@ -10,8 +10,8 @@ use Filament\Forms\Components\Repeater;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class PembelianForm
@@ -20,158 +20,149 @@ class PembelianForm
     {
         return $schema
             ->components([
-                // === MASTER BELI (Header) ===
-                Section::make('Master Pembelian')
-                    ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                TextInput::make('nomer_entry')
-                                    ->label('Nomer Entry')
-                                    ->required()
-                                    ->unique(ignoreRecord: true)
-                                    ->maxLength(255),
-                                DatePicker::make('tanggal')
-                                    ->label('Tanggal')
-                                    ->default(now())
-                                    ->required(),
-                                Select::make('supplier_id')
-                                    ->label('Supplier')
-                                    ->relationship('supplier', 'nama_supplier')
-                                    ->required()
-                                    ->searchable()
-                                    ->preload(),
-                                Select::make('gudang_id')
-                                    ->label('Gudang')
-                                    ->relationship('gudang', 'nama_gudang')
-                                    ->required()
-                                    ->searchable()
-                                    ->preload(),
-                                Select::make('jenis_pembayaran')
-                                    ->label('Jenis Pembayaran')
-                                    ->options([
-                                        'tunai' => 'Tunai',
-                                        'transfer' => 'Transfer',
-                                        'tempo' => 'Tempo',
-                                    ])
-                                    ->required(),
-                            ]),
-                    ]),
+                // === MASTER BELI ===
+                TextInput::make('nomer_entry')
+                    ->label('Nomer Entry (Master)')
+                    ->required()
+                    ->unique(ignoreRecord: true)
+                    ->maxLength(255)
+                    ->columnSpan(1),
+                DatePicker::make('tanggal')
+                    ->label('Tanggal')
+                    ->default(now())
+                    ->required()
+                    ->columnSpan(1),
+                Select::make('supplier_id')
+                    ->label('Supplier')
+                    ->relationship('supplier', 'nama_supplier')
+                    ->required()
+                    ->searchable()
+                    ->preload()
+                    ->columnSpan(1),
+                Select::make('gudang_id')
+                    ->label('Gudang Utama')
+                    ->relationship('gudang', 'nama_gudang')
+                    ->required()
+                    ->searchable()
+                    ->preload()
+                    ->columnSpan(1),
+                Select::make('jenis_pembayaran')
+                    ->label('Jenis Pembayaran')
+                    ->options([
+                        'tunai' => 'Tunai',
+                        'transfer' => 'Transfer',
+                        'tempo' => 'Tempo',
+                    ])
+                    ->required()
+                    ->columnSpan(2),
 
-                // === DETAIL BELI (Items) ===
-                Section::make('Detail Barang')
+                // === DETAIL BELI ===
+                Repeater::make('details')
+                    ->label('Detail Barang')
+                    ->relationship()
                     ->schema([
-                        Repeater::make('details')
-                            ->relationship()
-                            ->schema([
-                                Grid::make(6)
-                                    ->schema([
-                                        Select::make('barang_id')
-                                            ->label('Barang')
-                                            ->relationship('barang', 'nama_barang')
-                                            ->required()
-                                            ->searchable()
-                                            ->preload()
-                                            ->reactive()
-                                            ->afterStateUpdated(function (Set $set, $state) {
-                                                if ($state) {
-                                                    $barang = Barang::find($state);
-                                                    if ($barang) {
-                                                        $set('harga', $barang->harga_beli);
-                                                    }
-                                                }
-                                            })
-                                            ->columnSpan(2),
-                                        Select::make('gudang_id')
-                                            ->label('Gudang')
-                                            ->relationship('gudang', 'nama_gudang')
-                                            ->required()
-                                            ->searchable()
-                                            ->preload()
-                                            ->columnSpan(1),
-                                        TextInput::make('satuan')
-                                            ->label('Satuan')
-                                            ->default('pcs')
-                                            ->columnSpan(1),
-                                        TextInput::make('jumlah')
-                                            ->label('Jumlah')
-                                            ->numeric()
-                                            ->required()
-                                            ->default(1)
-                                            ->reactive()
-                                            ->afterStateUpdated(function (Get $get, Set $set) {
-                                                self::hitungSubtotal($get, $set);
-                                            })
-                                            ->columnSpan(1),
-                                        TextInput::make('harga')
-                                            ->label('Harga')
-                                            ->numeric()
-                                            ->required()
-                                            ->default(0)
-                                            ->prefix('Rp')
-                                            ->reactive()
-                                            ->afterStateUpdated(function (Get $get, Set $set) {
-                                                self::hitungSubtotal($get, $set);
-                                            })
-                                            ->columnSpan(1),
-                                    ]),
-                                Grid::make(6)
-                                    ->schema([
-                                        TextInput::make('diskon')
-                                            ->label('Diskon (%)')
-                                            ->numeric()
-                                            ->default(0)
-                                            ->reactive()
-                                            ->afterStateUpdated(function (Get $get, Set $set) {
-                                                self::hitungSubtotal($get, $set);
-                                            })
-                                            ->columnSpan(1),
-                                        TextInput::make('subtotal')
-                                            ->label('Subtotal')
-                                            ->numeric()
-                                            ->default(0)
-                                            ->prefix('Rp')
-                                            ->readOnly()
-                                            ->columnSpan(2),
-                                    ]),
-                            ])
-                            ->columns(6)
-                            ->addActionLabel('+ Tambah Barang')
-                            ->defaultItems(1)
-                            ->reorderable(false)
-                            ->columnSpanFull(),
-                    ]),
+                        Select::make('barang_id')
+                            ->label('Barang')
+                            ->relationship('barang', 'nama_barang')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->reactive()
+                            ->afterStateUpdated(function (Set $set, $state) {
+                                if ($state) {
+                                    $barang = Barang::find($state);
+                                    if ($barang) {
+                                        $set('harga', $barang->harga_beli);
+                                    }
+                                }
+                            })
+                            ->columnSpan(3),
+                        Select::make('gudang_id')
+                            ->label('Gudang')
+                            ->relationship('gudang', 'nama_gudang')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->columnSpan(3),
+                        TextInput::make('satuan')
+                            ->label('Satuan')
+                            ->default('pcs')
+                            ->columnSpan(2),
+                        TextInput::make('jumlah')
+                            ->label('Jumlah')
+                            ->numeric()
+                            ->required()
+                            ->default(1)
+                            ->reactive()
+                            ->afterStateUpdated(function (Get $get, Set $set) {
+                                self::hitungSubtotal($get, $set);
+                            })
+                            ->columnSpan(2),
+                        TextInput::make('harga')
+                            ->label('Harga')
+                            ->numeric()
+                            ->required()
+                            ->default(0)
+                            ->prefix('Rp')
+                            ->reactive()
+                            ->afterStateUpdated(function (Get $get, Set $set) {
+                                self::hitungSubtotal($get, $set);
+                            })
+                            ->columnSpan(2),
+                        TextInput::make('diskon')
+                            ->label('Diskon (%)')
+                            ->numeric()
+                            ->default(0)
+                            ->dehydrateStateUsing(fn ($state) => $state ?? 0)
+                            ->reactive()
+                            ->afterStateUpdated(function (Get $get, Set $set) {
+                                self::hitungSubtotal($get, $set);
+                            })
+                            ->columnSpan(3),
+                        TextInput::make('subtotal')
+                            ->label('Subtotal')
+                            ->numeric()
+                            ->default(0)
+                            ->prefix('Rp')
+                            ->readOnly()
+                            ->columnSpan(3),
+                    ])
+                    ->columns(6)
+                    ->addActionLabel('+ Tambah Barang')
+                    ->defaultItems(1)
+                    ->reorderable(false)
+                    ->columnSpanFull(),
 
                 // === TOTAL ===
-                Section::make('Ringkasan')
-                    ->schema([
-                        Grid::make(3)
-                            ->schema([
-                                TextInput::make('total')
-                                    ->label('Total')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->prefix('Rp')
-                                    ->readOnly(),
-                                TextInput::make('diskon')
-                                    ->label('Diskon')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->prefix('Rp')
-                                    ->reactive()
-                                    ->afterStateUpdated(function (Get $get, Set $set) {
-                                        $total = (int) $get('total');
-                                        $diskon = (int) $get('diskon');
-                                        $set('neto', $total - $diskon);
-                                    }),
-                                TextInput::make('neto')
-                                    ->label('Neto')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->prefix('Rp')
-                                    ->readOnly(),
-                            ]),
-                    ]),
-            ]);
+                TextInput::make('total')
+                    ->label('Total Pembelian')
+                    ->numeric()
+                    ->default(0)
+                    ->prefix('Rp')
+                    ->readOnly()
+                    ->columnSpan(1),
+                TextInput::make('diskon')
+                    ->label('Diskon Keseluruhan')
+                    ->numeric()
+                    ->default(0)
+                    ->dehydrateStateUsing(fn ($state) => $state ?? 0)
+                    ->prefix('Rp')
+                    ->reactive()
+                    ->afterStateUpdated(function (Get $get, Set $set) {
+                        $total = (int) $get('total');
+                        $diskon = (int) $get('diskon');
+                        $set('neto', $total - $diskon);
+                    })
+                    ->columnSpan(1),
+                TextInput::make('neto')
+                    ->label('Neto (Bersih)')
+                    ->numeric()
+                    ->default(0)
+                    ->prefix('Rp')
+                    ->readOnly()
+                    ->columnSpan(1),
+            ])
+            ->columns(3);
     }
 
     // Hitung subtotal per item: (jumlah * harga) - diskon%

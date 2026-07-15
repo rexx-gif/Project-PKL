@@ -9,18 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         // Note: changing column types requires doctrine/dbal package installed in Laravel.
-        Schema::table('customer', function (Blueprint $table) {
-            if (Schema::hasColumn('customer', 'no_telepon')) {
-                $table->string('no_telepon')->nullable()->change();
+        Schema::table('customers', function (Blueprint $table) {
+            if (Schema::hasColumn('customers', 'no_telp')) {
+                $table->string('no_telp')->nullable()->change();
             }
         });
     }
 
     public function down(): void
     {
-        Schema::table('customer', function (Blueprint $table) {
-            if (Schema::hasColumn('customer', 'no_telepon')) {
-                $table->integer('no_telepon')->nullable()->change();
+        Schema::table('customers', function (Blueprint $table) {
+            if (Schema::hasColumn('customers', 'no_telp')) {
+                $table->integer('no_telp')->nullable()->change();
             }
         });
     }

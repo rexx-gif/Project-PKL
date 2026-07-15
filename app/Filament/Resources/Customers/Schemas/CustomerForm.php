@@ -19,7 +19,7 @@ class CustomerForm
                 TextInput::make('no_telp')
                     ->label('No. Telepon')
                     ->tel()
-                    ->maxLength(20),
+                    ->maxLength(30),
                 TextInput::make('email')
                     ->label('Email')
                     ->email()
