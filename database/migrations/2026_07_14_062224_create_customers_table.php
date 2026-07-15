@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id('id_customer');
             $table->string('nama_customer');
             $table->text('alamat')->nullable();
-            $table->string('no_telp', 20)->nullable();
+            $table->string('no_telepon', 20);
             $table->string('email')->nullable()->unique();
             $table->timestamps();
         });
