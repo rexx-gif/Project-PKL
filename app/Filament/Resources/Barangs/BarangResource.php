@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Barangs;
 use App\Filament\Resources\Barangs\Pages\CreateBarang;
 use App\Filament\Resources\Barangs\Pages\EditBarang;
 use App\Filament\Resources\Barangs\Pages\ListBarangs;
+use App\Filament\Resources\Barangs\RelationManagers\GudangsRelationManager;
 use App\Filament\Resources\Barangs\Schemas\BarangForm;
 use App\Filament\Resources\Barangs\Tables\BarangsTable;
 use App\Models\Barang;
@@ -41,7 +42,7 @@ class BarangResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            GudangsRelationManager::class,
         ];
     }
 

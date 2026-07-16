@@ -31,6 +31,16 @@ class BarangsTable
                     ->label('Harga Jual')
                     ->money('IDR')
                     ->sortable(),
+                TextColumn::make('total_stok')
+                    ->label('Total Stok')
+                    ->state(fn ($record): int => (int) $record->gudangs()->sum('stok'))
+                    ->badge()
+                    ->color(fn (int $state): string => match (true) {
+                        $state <= 0 => 'danger',
+                        $state < 10 => 'warning',
+                        default => 'success',
+                    }),
+                    // ->description(fn ($record): string => $record->gudangs->map(fn ($g) => $g->nama_gudang . ': ' . $g->pivot->stok . ' pcs')->implode(', ')),
                 TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y')
