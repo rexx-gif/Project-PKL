@@ -8,8 +8,8 @@ use App\Models\DetailJual;
 use App\Models\Gudang;
 use App\Models\JenisBarang;
 use App\Models\KartuStok;
-use App\Models\MutasiStok;
 use App\Models\Penjualan;
+use App\Services\StokService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -42,7 +42,7 @@ class KasirController extends Controller
     /**
      * Simpan transaksi kasir.
      * Alurnya ngikutin pola CreatePembelian::afterCreate() punya admin Filament,
-     * tapi arah stoknya keluar.
+     * tapi arah stoknya keluar via StokService::kurangiStok().
      */
     public function simpan(Request $request)
     {
@@ -85,7 +85,6 @@ class KasirController extends Controller
                     'diskon' => $d['diskon'],
                     'subtotal' => $subtotal,
                     'satuan' => $d['satuan'] ?? 'pcs',
-                    'stok_sekarang' => $stok,
                 ];
             }
 
@@ -96,8 +95,6 @@ class KasirController extends Controller
             $bayar = $data['jenis_pembayaran'] === 'tunai' ? $data['bayar'] : $neto;
 
             // nomer nota urut dibikin server biar gak bentrok kalau kasirnya lebih dari satu.
-            // (lock baris penjualan hari ini dulu, baru dihitung — pgsql gak boleh
-            //  FOR UPDATE bareng count())
             $urutan = Penjualan::whereDate('tanggal', $data['tanggal'])
                 ->lockForUpdate()->get('id')->count() + 1;
             $nomerNota = 'PJ-' . str_replace('-', '', $data['tanggal']) . '-' . str_pad($urutan, 4, '0', STR_PAD_LEFT);
@@ -127,58 +124,20 @@ class KasirController extends Controller
                     'subtotal' => $d['subtotal'],
                 ]);
 
-                // kurangi stok di pivot barang_gudang
-                $d['barang']->gudangs()->updateExistingPivot($gudangId, [
-                    'stok' => $d['stok_sekarang'] - $d['jumlah'],
-                ]);
-
-                // === KARTU STOK (pola sama kayak CreatePembelian, arah keluar) ===
-                $lastKartu = KartuStok::where('barang_id', $d['barang']->id)
-                    ->where('gudang_id', $gudangId)
-                    ->latest('id')
-                    ->first();
-                $saldoBaru = ($lastKartu ? (int) $lastKartu->saldo : 0) - $d['jumlah'];
-
-                KartuStok::create([
-                    'barang_id' => $d['barang']->id,
-                    'gudang_id' => $gudangId,
-                    'nomer_entry' => $nomerNota,
-                    'tanggal' => $data['tanggal'],
-                    'keterangan' => 'Penjualan kasir',
-                    'jenis_transaksi' => 'keluar',
-                    'jumlah' => $d['jumlah'],
-                    'harga' => $d['harga'],
-                    'saldo' => $saldoBaru,
-                ]);
-
-                // === MUTASI STOK ===
-                $mutasi = MutasiStok::where('barang_id', $d['barang']->id)
-                    ->where('gudang_id', $gudangId)
-                    ->where('tanggal', $data['tanggal'])
-                    ->first();
-
-                if ($mutasi) {
-                    $mutasi->update([
-                        'keluar' => $mutasi->keluar + $d['jumlah'],
-                        'saldo' => $mutasi->awal + $mutasi->masuk - ($mutasi->keluar + $d['jumlah']),
-                    ]);
-                } else {
-                    $lastMutasi = MutasiStok::where('barang_id', $d['barang']->id)
-                        ->where('gudang_id', $gudangId)
-                        ->latest('tanggal')
-                        ->first();
-                    $awal = $lastMutasi ? (int) $lastMutasi->saldo : 0;
-
-                    MutasiStok::create([
-                        'barang_id' => $d['barang']->id,
-                        'gudang_id' => $gudangId,
-                        'awal' => $awal,
-                        'masuk' => 0,
-                        'keluar' => $d['jumlah'],
-                        'saldo' => $awal - $d['jumlah'],
+                // === STOK & KARTU STOK via StokService (sama kayak pembelian di admin) ===
+                app(StokService::class)->kurangiStok(
+                    barangId: $d['barang']->id,
+                    gudangId: $gudangId,
+                    jumlah: $d['jumlah'],
+                    konteks: [
+                        'nomer_entry' => $nomerNota,
                         'tanggal' => $data['tanggal'],
-                    ]);
-                }
+                        'harga' => $d['harga'],
+                        'keterangan' => 'Penjualan kasir',
+                        'jenis' => KartuStok::JENIS_KELUAR,
+                    ],
+                    validasi: false, // sudah divalidasi di atas
+                );
             }
 
             return $penjualan;
