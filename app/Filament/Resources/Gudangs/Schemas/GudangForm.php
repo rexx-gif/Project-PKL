@@ -18,6 +18,7 @@ class GudangForm
                     ->maxLength(255),
                 Textarea::make('alamat')
                     ->label('Alamat')
+                    ->required()
                     ->columnSpanFull(),
             ]);
     }

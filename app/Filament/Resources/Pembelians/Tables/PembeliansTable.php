@@ -2,13 +2,15 @@
 
 namespace App\Filament\Resources\Pembelians\Tables;
 
+use App\Exceptions\StokTidakCukupException;
+use App\Services\StokService;
+use Filament\Notifications\Notification;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
+use Illuminate\Support\Facades\DB;
 
 class PembeliansTable
 {
@@ -35,14 +37,6 @@ class PembeliansTable
                     ->label('Total')
                     ->money('IDR')
                     ->sortable(),
-                TextColumn::make('diskon')
-                    ->label('Diskon')
-                    ->money('IDR')
-                    ->sortable(),
-                TextColumn::make('neto')
-                    ->label('Neto')
-                    ->money('IDR')
-                    ->sortable(),
                 TextColumn::make('jenis_pembayaran')
                     ->label('Pembayaran')
                     ->badge()
@@ -52,6 +46,8 @@ class PembeliansTable
                         'tempo' => 'warning',
                         default => 'gray',
                     }),
+                TextColumn::make('user.name')
+                    ->label('Diinput oleh'),
                 TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y')
@@ -76,12 +72,25 @@ class PembeliansTable
             ])
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make(),
+                DeleteAction::make()
+                    ->using(function ($record, DeleteAction $action) {
+                        $stok = app(StokService::class);
+                        try {
+                            return DB::transaction(function () use ($stok, $record) {
+                                $stok->balikkanPembelian($stok->snapshotPembelian($record));
+                                return $record->delete();
+                            });
+                        } catch (StokTidakCukupException $e) {
+                            Notification::make()->danger()
+                                ->title('Tidak bisa menghapus')
+                                ->body($e->getMessage())
+                                ->send();
+                            $action->cancel();
+                        }
+                    }),
             ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+            ->bulkActions([
+                // Removed DeleteBulkAction to prevent bypass of stock validation
             ]);
     }
 }

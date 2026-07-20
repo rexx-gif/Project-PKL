@@ -1,53 +1,49 @@
 <?php
 
-namespace App\Filament\Resources\Pembelians\Pages;
+namespace App\Filament\Resources\PerpindahanBarangs\Pages;
 
 use App\Exceptions\StokTidakCukupException;
-use App\Filament\Resources\Pembelians\PembelianResource;
+use App\Filament\Resources\PerpindahanBarangs\PerpindahanBarangResource;
 use App\Services\StokService;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\DB;
 
-class EditPembelian extends EditRecord
+class EditPerpindahanBarang extends EditRecord
 {
-    protected static string $resource = PembelianResource::class;
+    protected static string $resource = PerpindahanBarangResource::class;
 
     private array $snapshotLama = [];
-
-    protected function mutateFormDataBeforeSave(array $data): array
-    {
-        $details = $this->data['details'] ?? [];
-        $total = 0;
-        foreach ($details as $detail) {
-            $total += (int) ($detail['subtotal'] ?? 0);
-        }
-        $data['total'] = $total;
-        $data['neto'] = $total - (int) ($data['diskon'] ?? 0);
-
-        return $data;
-    }
 
     protected function beforeSave(): void
     {
         $stok = app(StokService::class);
         $record = $this->record->fresh();
-        $this->snapshotLama = $stok->snapshotPembelian($record);
+        $this->snapshotLama = $stok->snapshotPerpindahan($record);
 
         // delta = -lama +baru per (barang, gudang); cek tidak bikin minus
         $deltas = [];
+        
+        // Balikkan efek lama: +jumlah di asal lama, -jumlah di tujuan lama
         foreach ($this->snapshotLama['details'] as $d) {
-            $kunci = "{$d['barang_id']}:{$this->snapshotLama['gudang_id']}";
-            $deltas[$kunci] = ($deltas[$kunci] ?? 0) - $d['jumlah'];
+            $asal = "{$d['barang_id']}:{$this->snapshotLama['gudang_asal_id']}";
+            $tujuan = "{$d['barang_id']}:{$this->snapshotLama['gudang_tujuan_id']}";
+            $deltas[$asal] = ($deltas[$asal] ?? 0) + $d['jumlah'];
+            $deltas[$tujuan] = ($deltas[$tujuan] ?? 0) - $d['jumlah'];
         }
-        $gudangBaru = (int) $this->data['gudang_id'];
+
+        // Terapkan efek baru: -jumlah di asal baru, +jumlah di tujuan baru
+        $gudangAsalBaru = (int) $this->data['gudang_asal_id'];
+        $gudangTujuanBaru = (int) $this->data['gudang_tujuan_id'];
         foreach ($this->data['details'] ?? [] as $d) {
             if (empty($d['barang_id'])) {
                 continue;
             }
-            $kunci = "{$d['barang_id']}:{$gudangBaru}";
-            $deltas[$kunci] = ($deltas[$kunci] ?? 0) + (int) $d['jumlah'];
+            $asal = "{$d['barang_id']}:{$gudangAsalBaru}";
+            $tujuan = "{$d['barang_id']}:{$gudangTujuanBaru}";
+            $deltas[$asal] = ($deltas[$asal] ?? 0) - (int) $d['jumlah'];
+            $deltas[$tujuan] = ($deltas[$tujuan] ?? 0) + (int) $d['jumlah'];
         }
 
         try {
@@ -65,16 +61,18 @@ class EditPembelian extends EditRecord
     {
         $stok = app(StokService::class);
         DB::transaction(function () use ($stok) {
-            // balikkan efek lama tanpa validasi per-langkah (sudah divalidasi via delta),
+            // balikkan efek lama dengan validasi dinonaktifkan per-langkah (sudah divalidasi via delta),
             // lalu terapkan efek baru
-            foreach ($this->snapshotLama['details'] as $d) {
-                $stok->kurangiStok($d['barang_id'], $this->snapshotLama['gudang_id'], $d['jumlah'], [
-                    'nomer_entry' => $this->snapshotLama['nomer_entry'],
+            foreach ($this->snapshotLama['details'] as $detail) {
+                $konteks = [
+                    'nomer_entry' => 'PIN-' . $this->snapshotLama['id'],
                     'jenis' => \App\Models\KartuStok::JENIS_KOREKSI,
-                    'keterangan' => 'Pembalikan (edit) pembelian ' . $this->snapshotLama['nomer_entry'],
-                ], validasi: false);
+                    'keterangan' => 'Pembalikan (edit) perpindahan PIN-' . $this->snapshotLama['id'],
+                ];
+                $stok->kurangiStok($detail['barang_id'], $this->snapshotLama['gudang_tujuan_id'], $detail['jumlah'], $konteks, validasi: false);
+                $stok->tambahStok($detail['barang_id'], $this->snapshotLama['gudang_asal_id'], $detail['jumlah'], $konteks);
             }
-            $stok->terapkanPembelian($this->record->fresh());
+            $stok->terapkanPerpindahan($this->record->fresh());
         });
     }
 
@@ -86,7 +84,7 @@ class EditPembelian extends EditRecord
                     $stok = app(StokService::class);
                     try {
                         return DB::transaction(function () use ($stok, $record) {
-                            $stok->balikkanPembelian($stok->snapshotPembelian($record));
+                            $stok->balikkanPerpindahan($stok->snapshotPerpindahan($record));
                             return $record->delete();
                         });
                     } catch (StokTidakCukupException $e) {

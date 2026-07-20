@@ -1,0 +1,106 @@
+<?php
+
+namespace App\Filament\Resources\PerpindahanBarangs\Schemas;
+
+use App\Models\Barang;
+use Closure;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Builder;
+
+class PerpindahanBarangForm
+{
+    public static function configure(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                TextInput::make('nomer_entry')
+                    ->label('Nomer Entry')
+                    ->default('Otomatis')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->columnSpan(2),
+                Select::make('gudang_asal_id')
+                    ->label('Gudang Asal')
+                    ->relationship('gudangAsal', 'nama_gudang', function (Builder $query, Get $get) {
+                        if ($tujuanId = $get('gudang_tujuan_id')) {
+                            $query->where('id', '!=', $tujuanId);
+                        }
+                    })
+                    ->required()->searchable()->preload()->reactive(),
+                Select::make('gudang_tujuan_id')
+                    ->label('Gudang Tujuan')
+                    ->relationship('gudangTujuan', 'nama_gudang', function (Builder $query, Get $get) {
+                        if ($asalId = $get('gudang_asal_id')) {
+                            $query->where('id', '!=', $asalId);
+                        }
+                    })
+                    ->required()->searchable()->preload()->reactive()
+                    ->different('gudang_asal_id')
+                    ->validationMessages(['different' => 'Gudang tujuan harus beda dari gudang asal.']),
+                DatePicker::make('tanggal')
+                    ->label('Tanggal')->default(now())->required(),
+                Textarea::make('keterangan')
+                    ->label('Keterangan')->rows(2)->columnSpanFull(),
+
+                Repeater::make('details')
+                    ->label('Daftar Barang')
+                    ->relationship()
+                    ->schema([
+                        Select::make('barang_id')
+                            ->label('Barang')
+                            ->options(function (Get $get) {
+                                $gudangId = $get('../../gudang_asal_id');
+                                if (! $gudangId) {
+                                    return [];
+                                }
+                                return DB::table('barang_gudang')
+                                    ->join('barang', 'barang.id', '=', 'barang_gudang.barang_id')
+                                    ->where('barang_gudang.gudang_id', $gudangId)
+                                    ->where('barang_gudang.stok', '>', 0)
+                                    ->get()
+                                    ->mapWithKeys(function ($item) {
+                                        return [$item->barang_id => $item->nama_barang . ' (stok: ' . $item->stok . ')'];
+                                    });
+                            })
+                            ->required()->searchable()
+                            ->distinct()
+                            ->disableOptionsWhenSelectedInSiblingRepeaterItems()
+                            ->columnSpan(4),
+                        TextInput::make('jumlah')
+                            ->label('Jumlah')
+                            ->numeric()->required()->minValue(1)
+                            ->extraInputAttributes(['oninput' => "this.value = this.value.replace(/[^0-9]/g, '')"])
+                            ->rule(fn (Get $get, $livewire) => $livewire instanceof \App\Filament\Resources\PerpindahanBarangs\Pages\CreatePerpindahanBarang
+                                ? function (string $attribute, $value, Closure $fail) use ($get) {
+                                    $gudangId = $get('../../gudang_asal_id');
+                                    $barangId = $get('barang_id');
+                                    if (! $gudangId || ! $barangId) {
+                                        return;
+                                    }
+                                    $stok = (int) DB::table('barang_gudang')
+                                        ->where('gudang_id', $gudangId)
+                                        ->where('barang_id', $barangId)
+                                        ->value('stok');
+                                    if ((int) $value > $stok) {
+                                        $fail("Stok tidak cukup (tersedia: {$stok}).");
+                                    }
+                                }
+                                : null)
+                            ->columnSpan(2),
+                    ])
+                    ->columns(6)
+                    ->addActionLabel('+ Tambah Barang')
+                    ->defaultItems(1)
+                    ->reorderable(false)
+                    ->columnSpanFull(),
+            ])
+            ->columns(2);
+    }
+}

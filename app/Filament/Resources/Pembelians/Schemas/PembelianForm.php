@@ -22,10 +22,10 @@ class PembelianForm
             ->components([
                 // === MASTER BELI ===
                 TextInput::make('nomer_entry')
-                    ->label('Nomer Entry (Master)')
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(255)
+                    ->label('Nomer Entry')
+                    ->default('Otomatis')
+                    ->disabled()
+                    ->dehydrated(false)
                     ->columnSpan(1),
                 DatePicker::make('tanggal')
                     ->label('Tanggal')
@@ -40,7 +40,7 @@ class PembelianForm
                     ->preload()
                     ->columnSpan(1),
                 Select::make('gudang_id')
-                    ->label('Gudang Utama')
+                    ->label('Gudang Tujuan')
                     ->relationship('gudang', 'nama_gudang')
                     ->required()
                     ->searchable()
@@ -51,10 +51,13 @@ class PembelianForm
                     ->options([
                         'tunai' => 'Tunai',
                         'transfer' => 'Transfer',
-                        'tempo' => 'Tempo',
                     ])
                     ->required()
                     ->columnSpan(2),
+                \Filament\Forms\Components\Textarea::make('keterangan')
+                    ->label('Keterangan')
+                    ->rows(2)
+                    ->columnSpanFull(),
 
                 // === DETAIL BELI ===
                 Repeater::make('details')
@@ -67,6 +70,8 @@ class PembelianForm
                             ->required()
                             ->searchable()
                             ->preload()
+                            ->distinct()
+                            ->disableOptionsWhenSelectedInSiblingRepeaterItems()
                             ->reactive()
                             ->afterStateUpdated(function (Set $set, $state) {
                                 if ($state) {
@@ -76,26 +81,18 @@ class PembelianForm
                                     }
                                 }
                             })
-                            ->columnSpan(3),
-                        Select::make('gudang_id')
-                            ->label('Gudang')
-                            ->relationship('gudang', 'nama_gudang')
-                            ->required()
-                            ->searchable()
-                            ->preload()
-                            ->columnSpan(3),
-                        TextInput::make('satuan')
-                            ->label('Satuan')
-                            ->default('pcs')
-                            ->columnSpan(2),
+                            ->columnSpan(4),
+
                         TextInput::make('jumlah')
                             ->label('Jumlah')
                             ->numeric()
                             ->required()
                             ->default(1)
+                            ->minValue(1)
+                            ->extraInputAttributes(['oninput' => "this.value = this.value.replace(/[^0-9]/g, '')"])
                             ->reactive()
                             ->afterStateUpdated(function (Get $get, Set $set) {
-                                self::hitungSubtotal($get, $set);
+                                self::hitungTotal($get, $set);
                             })
                             ->columnSpan(2),
                         TextInput::make('harga')
@@ -104,19 +101,10 @@ class PembelianForm
                             ->required()
                             ->default(0)
                             ->prefix('Rp')
+                            ->extraInputAttributes(['oninput' => "this.value = this.value.replace(/[^0-9]/g, '')"])
                             ->reactive()
                             ->afterStateUpdated(function (Get $get, Set $set) {
-                                self::hitungSubtotal($get, $set);
-                            })
-                            ->columnSpan(2),
-                        TextInput::make('diskon')
-                            ->label('Diskon (%)')
-                            ->numeric()
-                            ->default(0)
-                            ->dehydrateStateUsing(fn ($state) => $state ?? 0)
-                            ->reactive()
-                            ->afterStateUpdated(function (Get $get, Set $set) {
-                                self::hitungSubtotal($get, $set);
+                                self::hitungTotal($get, $set);
                             })
                             ->columnSpan(3),
                         TextInput::make('subtotal')
@@ -127,10 +115,14 @@ class PembelianForm
                             ->readOnly()
                             ->columnSpan(3),
                     ])
-                    ->columns(6)
+                    ->columns(12)
                     ->addActionLabel('+ Tambah Barang')
                     ->defaultItems(1)
                     ->reorderable(false)
+                    ->reactive()
+                    ->afterStateUpdated(function (Get $get, Set $set) {
+                        self::hitungTotalGlobal($get, $set);
+                    })
                     ->columnSpanFull(),
 
                 // === TOTAL ===
@@ -140,42 +132,39 @@ class PembelianForm
                     ->default(0)
                     ->prefix('Rp')
                     ->readOnly()
-                    ->columnSpan(1),
-                TextInput::make('diskon')
-                    ->label('Diskon Keseluruhan')
-                    ->numeric()
-                    ->default(0)
-                    ->dehydrateStateUsing(fn ($state) => $state ?? 0)
-                    ->prefix('Rp')
-                    ->reactive()
-                    ->afterStateUpdated(function (Get $get, Set $set) {
-                        $total = (int) $get('total');
-                        $diskon = (int) $get('diskon');
-                        $set('neto', $total - $diskon);
-                    })
-                    ->columnSpan(1),
-                TextInput::make('neto')
-                    ->label('Neto (Bersih)')
-                    ->numeric()
-                    ->default(0)
-                    ->prefix('Rp')
-                    ->readOnly()
-                    ->columnSpan(1),
+                    ->columnSpan(3),
             ])
             ->columns(3);
     }
 
-    // Hitung subtotal per item: (jumlah * harga) - diskon%
-    private static function hitungSubtotal(Get $get, Set $set): void
+    private static function hitungTotal(Get $get, Set $set): void
     {
         $jumlah = (int) $get('jumlah');
         $harga = (int) $get('harga');
-        $diskon = (int) $get('diskon');
-
+        
         $subtotal = $jumlah * $harga;
-        if ($diskon > 0) {
-            $subtotal = $subtotal - ($subtotal * $diskon / 100);
+        $set('subtotal', $subtotal);
+
+        // Ambil semua details dari parent
+        $details = $get('../../details') ?? [];
+        $total = 0;
+        foreach ($details as $k => $detail) {
+            $j = (int) ($detail['jumlah'] ?? 0);
+            $h = (int) ($detail['harga'] ?? 0);
+            $total += $j * $h;
         }
-        $set('subtotal', (int) $subtotal);
+        $set('../../total', $total);
+    }
+
+    private static function hitungTotalGlobal(Get $get, Set $set): void
+    {
+        $details = $get('details') ?? [];
+        $total = 0;
+        foreach ($details as $detail) {
+            $j = (int) ($detail['jumlah'] ?? 0);
+            $h = (int) ($detail['harga'] ?? 0);
+            $total += $j * $h;
+        }
+        $set('total', $total);
     }
 }

@@ -10,15 +10,15 @@ return new class extends Migration
     {
         Schema::create('kartu_stok', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('barang_id')->constrained('barang')->cascadeOnDelete();
-            $table->foreignId('gudang_id')->constrained('gudang')->cascadeOnDelete();
+            $table->foreignId('barang_id')->constrained('barang')->restrictOnDelete();
+            $table->foreignId('gudang_id')->constrained('gudang')->restrictOnDelete();
             $table->string('nomer_entry')->nullable();
-            $table->dateTime('tanggal')->nullable();
+            $table->dateTime('tanggal');
             $table->string('keterangan')->nullable();
-            $table->enum('jenis_transaksi', ['masuk', 'keluar'])->nullable();
-            $table->integer('jumlah')->default(0);
+            $table->string('jenis_transaksi'); // konstanta di model: masuk|keluar|pindah_masuk|pindah_keluar|koreksi
+            $table->integer('jumlah');
             $table->integer('harga')->default(0);
-            $table->integer('saldo')->nullable();
+            $table->integer('saldo'); // stok setelah transaksi ini
             $table->timestamps();
         });
     }

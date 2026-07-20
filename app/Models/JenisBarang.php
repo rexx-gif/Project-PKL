@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class JenisBarang extends Model
 {
+    use HasFactory;
+
     protected $table = 'jenis_barang'; //maksa Laravel ngebaca tabel yang bener dan bukan jenis_barangs (plural bahasa Inggris)
     protected $guarded = ['id']; //biar aman, data id gak bisa diubah
 

@@ -20,20 +20,10 @@ class GudangsRelationManager extends RelationManager
 
     protected static ?string $title = 'Stok Gudang';
 
-    public function form(Schema $schema): Schema
-    {
-        return $schema
-            ->components([
-                TextInput::make('stok')
-                    ->label('Jumlah Stok')
-                    ->required()
-                    ->numeric()
-                    ->default(0),
-            ]);
-    }
-
     public function table(Table $table): Table
     {
+        // Stok hanya dapat diubah melalui dokumen transaksi (Pembelian/Perpindahan)
+        // Rujuk: docs/future-enhancements/stok-opname.md untuk penyesuaian stok langsung
         return $table
             ->recordTitleAttribute('nama_gudang')
             ->columns([
@@ -53,29 +43,8 @@ class GudangsRelationManager extends RelationManager
             ->filters([
                 //
             ])
-            ->headerActions([
-                AttachAction::make()
-                    ->label('Tambah Stok ke Gudang')
-                    ->preloadRecordSelect()
-                    ->form(fn(AttachAction $action): array => [
-                        $action->getRecordSelect(),
-                        TextInput::make('stok')
-                            ->label('Jumlah Stok Awal')
-                            ->required()
-                            ->numeric()
-                            ->default(0),
-                    ]),
-            ])
-            ->recordActions([
-                EditAction::make()
-                    ->label('Edit'),
-                DetachAction::make()
-                    ->label('Delete'),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DetachBulkAction::make(),
-                ]),
-            ]);
+            ->headerActions([])
+            ->recordActions([])
+            ->toolbarActions([]);
     }
 }

@@ -11,6 +11,12 @@ class KartuStok extends Model
 
     protected $table = 'kartu_stok';
 
+    public const JENIS_MASUK = 'masuk';
+    public const JENIS_KELUAR = 'keluar';
+    public const JENIS_PINDAH_MASUK = 'pindah_masuk';
+    public const JENIS_PINDAH_KELUAR = 'pindah_keluar';
+    public const JENIS_KOREKSI = 'koreksi';
+
     protected $fillable = [
         'barang_id',
         'gudang_id',

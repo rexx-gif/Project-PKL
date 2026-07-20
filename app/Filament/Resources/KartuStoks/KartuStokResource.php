@@ -23,6 +23,8 @@ class KartuStokResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Kartu Stok';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Laporan';
+
     // Tidak ada form karena read-only
     public static function form(Schema $schema): Schema
     {

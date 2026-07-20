@@ -2,14 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 
-class Pembelian extends Model
+class PerpindahanBarang extends Model
 {
-    use HasFactory, LogsActivity;
+    use LogsActivity;
 
     protected static function boot()
     {
@@ -17,7 +16,7 @@ class Pembelian extends Model
 
         static::creating(function ($model) {
             if (empty($model->nomer_entry)) {
-                $prefix = 'PB-' . date('Ymd') . '-';
+                $prefix = 'MV-' . date('Ymd') . '-';
                 $latest = self::where('nomer_entry', 'like', $prefix . '%')
                     ->orderBy('nomer_entry', 'desc')
                     ->lockForUpdate()
@@ -38,43 +37,30 @@ class Pembelian extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logFillable()
+            ->logUnguarded()
             ->logOnlyDirty()
             ->dontLogEmptyChanges();
     }
+    protected $table = 'perpindahan_barang';
+    protected $guarded = ['id'];
 
-    protected $table = 'pembelian';
-
-    protected $fillable = [
-        'nomer_entry',
-        'supplier_id',
-        'gudang_id',
-        'user_id',
-        'tanggal',
-        'total',
-        'diskon',
-        'neto',
-        'jenis_pembayaran',
-        'keterangan',
-    ];
-
-    public function supplier()
+    public function details()
     {
-        return $this->belongsTo(Supplier::class, 'supplier_id');
+        return $this->hasMany(PerpindahanBarangDetail::class, 'perpindahan_barang_id');
     }
 
-    public function gudang()
+    public function gudangAsal()
     {
-        return $this->belongsTo(Gudang::class, 'gudang_id');
+        return $this->belongsTo(Gudang::class, 'gudang_asal_id');
+    }
+
+    public function gudangTujuan()
+    {
+        return $this->belongsTo(Gudang::class, 'gudang_tujuan_id');
     }
 
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
-    }
-
-    public function details()
-    {
-        return $this->hasMany(DetailBeli::class, 'pembelian_id');
     }
 }

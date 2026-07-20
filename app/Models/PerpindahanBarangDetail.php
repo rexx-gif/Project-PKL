@@ -2,38 +2,27 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 
-class DetailBeli extends Model
+class PerpindahanBarangDetail extends Model
 {
-    use HasFactory, LogsActivity;
+    use LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logFillable()
+            ->logUnguarded()
             ->logOnlyDirty()
             ->dontLogEmptyChanges();
     }
+    protected $table = 'perpindahan_barang_detail';
+    protected $guarded = ['id'];
 
-    protected $table = 'detail_beli';
-
-    protected $fillable = [
-        'pembelian_id',
-        'barang_id',
-        'satuan',
-        'jumlah',
-        'harga',
-        'diskon',
-        'subtotal',
-    ];
-
-    public function pembelian()
+    public function perpindahanBarang()
     {
-        return $this->belongsTo(Pembelian::class, 'pembelian_id');
+        return $this->belongsTo(PerpindahanBarang::class, 'perpindahan_barang_id');
     }
 
     public function barang()

@@ -20,9 +20,11 @@ class PembelianResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingCart;
 
-    protected static ?string $recordTitleAttribute = 'nomer_entry';
+    protected static string|\UnitEnum|null $navigationGroup = 'Transaksi';
 
-    protected static ?string $navigationLabel = 'Pembelian';
+    protected static ?string $navigationLabel = 'Barang Masuk (Pembelian)';
+
+    protected static ?string $recordTitleAttribute = 'nomer_entry';
 
     protected static ?string $modelLabel = 'Pembelian';
 
