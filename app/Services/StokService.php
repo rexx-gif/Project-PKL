@@ -157,7 +157,7 @@ class StokService
             $pindah->loadMissing('details', 'gudangAsal', 'gudangTujuan');
             foreach ($pindah->details as $detail) {
                 $konteks = [
-                    'nomer_entry' => 'PIN-' . $pindah->id,
+                    'nomer_entry' => $pindah->nomer_entry ?? 'PIN-' . $pindah->id,
                     'tanggal' => $pindah->tanggal,
                     'keterangan' => "Pindah {$pindah->gudangAsal->nama_gudang} → {$pindah->gudangTujuan->nama_gudang}",
                 ];
@@ -173,6 +173,7 @@ class StokService
     {
         return [
             'id' => $pindah->id,
+            'nomer_entry' => $pindah->nomer_entry,
             'gudang_asal_id' => $pindah->gudang_asal_id,
             'gudang_tujuan_id' => $pindah->gudang_tujuan_id,
             'details' => $pindah->details()->get(['barang_id', 'jumlah'])
@@ -185,10 +186,11 @@ class StokService
     {
         DB::transaction(function () use ($snapshot) {
             foreach ($snapshot['details'] as $detail) {
+                $nomerEntry = $snapshot['nomer_entry'] ?? 'PIN-' . $snapshot['id'];
                 $konteks = [
-                    'nomer_entry' => 'PIN-' . $snapshot['id'],
+                    'nomer_entry' => $nomerEntry,
                     'jenis' => KartuStok::JENIS_KOREKSI,
-                    'keterangan' => 'Pembalikan perpindahan PIN-' . $snapshot['id'],
+                    'keterangan' => 'Pembalikan perpindahan ' . $nomerEntry,
                 ];
                 $this->kurangiStok($detail['barang_id'], $snapshot['gudang_tujuan_id'], $detail['jumlah'], $konteks);
                 $this->tambahStok($detail['barang_id'], $snapshot['gudang_asal_id'], $detail['jumlah'], $konteks);
