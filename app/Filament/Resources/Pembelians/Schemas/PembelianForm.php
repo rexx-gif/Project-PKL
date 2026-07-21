@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Pembelians\Schemas;
 
 use App\Models\Barang;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Schemas\Components\Grid;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
@@ -27,7 +28,7 @@ class PembelianForm
                     ->disabled()
                     ->dehydrated(false)
                     ->columnSpan(1),
-                DatePicker::make('tanggal')
+                DateTimePicker::make('tanggal')
                     ->label('Tanggal')
                     ->default(now())
                     ->required()

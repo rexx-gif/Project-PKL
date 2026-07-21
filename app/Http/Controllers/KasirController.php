@@ -95,9 +95,11 @@ class KasirController extends Controller
             $bayar = $data['jenis_pembayaran'] === 'tunai' ? $data['bayar'] : $neto;
 
             // nomer nota urut dibikin server biar gak bentrok kalau kasirnya lebih dari satu.
-            $urutan = Penjualan::whereDate('tanggal', $data['tanggal'])
+            // Ambil tanggal (Y-m-d) saja dari $data['tanggal'] yang mungkin berisi jam
+            $tanggalOnly = substr($data['tanggal'], 0, 10);
+            $urutan = Penjualan::whereDate('tanggal', $tanggalOnly)
                 ->lockForUpdate()->get('id')->count() + 1;
-            $nomerNota = 'PJ-' . str_replace('-', '', $data['tanggal']) . '-' . str_pad($urutan, 4, '0', STR_PAD_LEFT);
+            $nomerNota = 'PJ-' . str_replace('-', '', $tanggalOnly) . '-' . str_pad($urutan, 4, '0', STR_PAD_LEFT);
 
             $penjualan = Penjualan::create([
                 'nomer_nota' => $nomerNota,

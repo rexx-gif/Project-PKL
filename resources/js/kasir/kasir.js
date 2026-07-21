@@ -136,11 +136,19 @@ async function prosesBayar() {
         return;
     }
 
+    const now = new Date();
+    const localDateTime = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0') + ' ' +
+        String(now.getHours()).padStart(2, '0') + ':' +
+        String(now.getMinutes()).padStart(2, '0') + ':' +
+        String(now.getSeconds()).padStart(2, '0');
+
     const payload = {
         // nomer nota dibikin server (KasirController@simpan) biar urut & gak bentrok
         customer_id: state.customerId,
         gudang_id: state.gudangId,
-        tanggal: new Date().toISOString().slice(0, 10),
+        tanggal: localDateTime,
         total: totalKotor(),
         diskon: state.diskonTransaksi,
         neto: totalNeto(),

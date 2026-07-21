@@ -24,7 +24,7 @@ class PembeliansTable
                     ->sortable(),
                 TextColumn::make('tanggal')
                     ->label('Tanggal')
-                    ->date('d M Y')
+                    ->dateTime('d M Y, H:i')
                     ->sortable(),
                 TextColumn::make('supplier.nama_supplier')
                     ->label('Supplier')
