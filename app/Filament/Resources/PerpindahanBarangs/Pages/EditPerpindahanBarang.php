@@ -64,10 +64,11 @@ class EditPerpindahanBarang extends EditRecord
             // balikkan efek lama dengan validasi dinonaktifkan per-langkah (sudah divalidasi via delta),
             // lalu terapkan efek baru
             foreach ($this->snapshotLama['details'] as $detail) {
+                $nomerEntry = $this->snapshotLama['nomer_entry'] ?? 'PIN-' . $this->snapshotLama['id'];
                 $konteks = [
-                    'nomer_entry' => 'PIN-' . $this->snapshotLama['id'],
+                    'nomer_entry' => $nomerEntry,
                     'jenis' => \App\Models\KartuStok::JENIS_KOREKSI,
-                    'keterangan' => 'Pembalikan (edit) perpindahan PIN-' . $this->snapshotLama['id'],
+                    'keterangan' => 'Pembalikan (edit) perpindahan ' . $nomerEntry,
                 ];
                 $stok->kurangiStok($detail['barang_id'], $this->snapshotLama['gudang_tujuan_id'], $detail['jumlah'], $konteks, validasi: false);
                 $stok->tambahStok($detail['barang_id'], $this->snapshotLama['gudang_asal_id'], $detail['jumlah'], $konteks);
