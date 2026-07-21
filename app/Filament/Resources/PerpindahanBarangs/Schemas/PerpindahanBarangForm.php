@@ -5,7 +5,6 @@ namespace App\Filament\Resources\PerpindahanBarangs\Schemas;
 use App\Models\Barang;
 use Closure;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -45,7 +44,7 @@ class PerpindahanBarangForm
                     ->required()->searchable()->preload()->reactive()
                     ->different('gudang_asal_id')
                     ->validationMessages(['different' => 'Gudang tujuan harus beda dari gudang asal.']),
-                DateTimePicker::make('tanggal')
+                DatePicker::make('tanggal')
                     ->label('Tanggal')->default(now())->required(),
                 Textarea::make('keterangan')
                     ->label('Keterangan')->rows(2)->columnSpanFull(),

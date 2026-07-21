@@ -27,7 +27,7 @@ class PerpindahanBarangsTable
                     ->sortable(),
                 TextColumn::make('tanggal')
                     ->label('Tanggal')
-                    ->dateTime('d M Y, H:i')
+                    ->date('d M Y')
                     ->sortable(),
                 TextColumn::make('gudangAsal.nama_gudang')
                     ->label('Dari')
