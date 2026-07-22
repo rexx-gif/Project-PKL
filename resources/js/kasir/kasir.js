@@ -45,8 +45,13 @@ function totalKotor() {
     return state.cart.reduce((sum, item) => sum + subtotalItem(item), 0);
 }
 
+function nominalDiskon() {
+    const total = totalKotor();
+    return Math.floor((total * state.diskonTransaksi) / 100);
+}
+
 function totalNeto() {
-    return Math.max(0, totalKotor() - state.diskonTransaksi);
+    return Math.max(0, totalKotor() - nominalDiskon());
 }
 
 function kembalian() {
@@ -164,7 +169,7 @@ async function prosesBayar() {
         gudang_id: state.gudangId,
         tanggal: new Date().toISOString().slice(0, 10),
         total: totalKotor(),
-        diskon: state.diskonTransaksi,
+        diskon: nominalDiskon(),
         neto: totalNeto(),
         jenis_pembayaran: state.jenisPembayaran,
         bayar: state.jenisPembayaran === 'tunai' ? state.bayar : totalNeto(),
@@ -233,7 +238,7 @@ function tampilkanStruk(payload) {
         <table class="w-full text-sm border-y border-dashed border-zinc-300 py-2 my-2 tabular-nums">${rows}</table>
         <div class="text-sm space-y-2 mt-4 tabular-nums">
             <div class="flex justify-between text-zinc-500"><span>Subtotal</span><span class="font-semibold text-zinc-900">${rupiah(payload.total)}</span></div>
-            <div class="flex justify-between text-zinc-500"><span>Diskon</span><span class="font-semibold text-zinc-900">- ${rupiah(payload.diskon)}</span></div>
+            <div class="flex justify-between text-zinc-500"><span>Diskon ${state.diskonTransaksi > 0 ? `(${state.diskonTransaksi}%)` : ''}</span><span class="font-semibold text-zinc-900">- ${rupiah(payload.diskon)}</span></div>
             <div class="flex justify-between items-baseline border-t border-dashed border-zinc-300 pt-2.5 mt-2.5">
                 <span class="font-bold">Total</span><span class="font-black text-base">${rupiah(payload.neto)}</span>
             </div>
@@ -373,6 +378,7 @@ function renderCart() {
 
     const inputDiskon = document.getElementById('input-diskon');
     if (document.activeElement !== inputDiskon) inputDiskon.value = state.diskonTransaksi || '';
+    
     const inputBayar = document.getElementById('input-bayar');
     if (document.activeElement !== inputBayar) inputBayar.value = state.bayar || '';
 
@@ -539,8 +545,18 @@ async function init() {
     });
 
     // search
-    document.getElementById('input-search').addEventListener('input', (e) => {
+    const inputSearch = document.getElementById('input-search');
+    const btnClearSearch = document.getElementById('btn-clear-search');
+    inputSearch.addEventListener('input', (e) => {
         state.search = e.target.value;
+        btnClearSearch.classList.toggle('hidden', state.search === '');
+        renderProduk();
+    });
+    btnClearSearch.addEventListener('click', () => {
+        state.search = '';
+        inputSearch.value = '';
+        btnClearSearch.classList.add('hidden');
+        inputSearch.focus();
         renderProduk();
     });
 
@@ -568,6 +584,7 @@ async function init() {
         state.diskonTransaksi = Number(e.target.value) || 0;
         renderCart();
     });
+
     document.getElementById('input-bayar').addEventListener('input', (e) => {
         state.bayar = Number(e.target.value) || 0;
         renderCart();
