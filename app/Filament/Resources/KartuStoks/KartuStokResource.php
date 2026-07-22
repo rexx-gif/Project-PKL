@@ -28,7 +28,7 @@ class KartuStokResource extends Resource
     // Tidak ada form karena read-only
     public static function form(Schema $schema): Schema
     {
-        return $schema->components([]);
+        return $schema;
     }
 
     public static function table(Table $table): Table

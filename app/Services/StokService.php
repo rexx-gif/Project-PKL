@@ -97,11 +97,20 @@ class StokService
 
     private function catatKartu(int $barangId, int $gudangId, int $jumlah, int $saldo, string $jenis, array $konteks): void
     {
+        $rawTanggal = $konteks['tanggal'] ?? null;
+        if ($rawTanggal) {
+            $tanggal = (strlen((string) $rawTanggal) === 10)
+                ? \Illuminate\Support\Carbon::parse($rawTanggal)->setTimeFrom(now())
+                : $rawTanggal;
+        } else {
+            $tanggal = now();
+        }
+
         KartuStok::create([
             'barang_id' => $barangId,
             'gudang_id' => $gudangId,
             'nomer_entry' => $konteks['nomer_entry'] ?? null,
-            'tanggal' => $konteks['tanggal'] ?? now(),
+            'tanggal' => $tanggal,
             'keterangan' => $konteks['keterangan'] ?? null,
             'jenis_transaksi' => $jenis,
             'jumlah' => $jumlah,

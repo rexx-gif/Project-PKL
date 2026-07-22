@@ -1,21 +1,22 @@
 <?php
 
-namespace App\Filament\Resources\Pembelians\Tables;
+namespace App\Filament\Resources\Penjualans\Tables;
 
-use App\Models\Pembelian;
+use App\Models\Penjualan;
 use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\View\View;
 
-class PembeliansTable
+class PenjualansTable
 {
     public static function configure(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('nomer_entry')
+                TextColumn::make('nomer_nota')
                     ->label('No. Entry')
                     ->searchable()
                     ->sortable()
@@ -26,8 +27,9 @@ class PembeliansTable
                     ->date('d M Y')
                     ->sortable(),
 
-                TextColumn::make('supplier.nama_supplier')
-                    ->label('Supplier')
+                TextColumn::make('customer.nama_customer')
+                    ->label('Customer')
+                    ->default('Pelanggan Umum')
                     ->searchable()
                     ->sortable(),
 
@@ -42,7 +44,7 @@ class PembeliansTable
                     ->money('IDR')
                     ->sortable()
                     ->weight('bold')
-                    ->color('primary'),
+                    ->color('success'),
 
                 TextColumn::make('jenis_pembayaran')
                     ->label('Pembayaran')
@@ -50,17 +52,13 @@ class PembeliansTable
                     ->formatStateUsing(fn (string $state): string => strtoupper($state))
                     ->color(fn (string $state): string => match ($state) {
                         'tunai' => 'success',
+                        'qris' => 'warning',
                         'transfer' => 'info',
-                        'tempo' => 'warning',
                         default => 'gray',
                     }),
 
-                TextColumn::make('user.name')
-                    ->label('Diinput oleh')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
                 TextColumn::make('created_at')
-                    ->label('Waktu Buat')
+                    ->label('Waktu Transaksi')
                     ->dateTime('d M Y H:i')
                     ->timezone('Asia/Jakarta')
                     ->sortable()
@@ -69,10 +67,6 @@ class PembeliansTable
             ->defaultSort('created_at', 'desc')
             ->recordAction('view_detail')
             ->filters([
-                SelectFilter::make('supplier_id')
-                    ->label('Supplier')
-                    ->relationship('supplier', 'nama_supplier'),
-
                 SelectFilter::make('gudang_id')
                     ->label('Gudang')
                     ->relationship('gudang', 'nama_gudang'),
@@ -81,17 +75,21 @@ class PembeliansTable
                     ->label('Jenis Pembayaran')
                     ->options([
                         'tunai' => 'Tunai',
+                        'qris' => 'QRIS',
                         'transfer' => 'Transfer',
-                        'tempo' => 'Tempo',
                     ]),
+
+                SelectFilter::make('customer_id')
+                    ->label('Customer')
+                    ->relationship('customer', 'nama_customer'),
             ])
             ->recordActions([
                 Action::make('view_detail')
                     ->extraAttributes(['class' => 'hidden', 'style' => 'display:none'])
-                    ->modalHeading(fn (Pembelian $record) => "Detail Pembelian #{$record->nomer_entry}")
-                    ->modalContent(fn (Pembelian $record): View => view(
-                        'filament.resources.pembelian.detail-modal',
-                        ['record' => $record->load('details.barang', 'supplier', 'gudang')]
+                    ->modalHeading(fn (Penjualan $record) => "Detail Penjualan #{$record->nomer_nota}")
+                    ->modalContent(fn (Penjualan $record): View => view(
+                        'filament.resources.penjualan.detail-modal',
+                        ['record' => $record->load('details.barang', 'customer', 'gudang')]
                     ))
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Tutup'),
