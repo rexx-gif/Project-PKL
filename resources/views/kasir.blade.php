@@ -126,7 +126,10 @@
                             <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/>
                         </svg>
                         <input id="input-search" type="text" placeholder="Cari nama barang"
-                            class="w-full h-12 border border-zinc-200 rounded-xl pl-11 pr-5 text-sm font-medium bg-white placeholder:text-zinc-400 placeholder:font-normal shadow-sm shadow-zinc-100 focus:outline-none focus:border-zinc-900 transition-colors">
+                            class="w-full h-12 border border-zinc-200 rounded-xl pl-11 pr-10 text-sm font-medium bg-white placeholder:text-zinc-400 placeholder:font-normal shadow-sm shadow-zinc-100 focus:outline-none focus:border-zinc-900 transition-colors">
+                        <button id="btn-clear-search" class="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 text-zinc-400 hover:text-zinc-900 hidden flex items-center justify-center transition-colors">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
                     </div>
 
                     <div id="filter-jenis" class="inline-flex flex-wrap w-fit gap-1 bg-zinc-200/60 rounded-xl p-1 mt-4 mb-6"></div>
@@ -157,10 +160,10 @@
                             <span class="text-zinc-500">Subtotal</span>
                             <span id="lbl-total" class="font-bold tabular-nums">Rp 0</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-zinc-500">Diskon</span>
-                            <input id="input-diskon" type="number" min="0" placeholder="Rp 0"
-                                class="w-28 text-right text-sm font-semibold bg-white border border-zinc-200 rounded-lg px-3 py-1.5 tabular-nums placeholder:font-normal placeholder:text-zinc-300 focus:outline-none focus:border-zinc-900 transition-colors">
+                        <div class="flex justify-between items-center gap-3">
+                            <span class="text-zinc-500">Diskon (%)</span>
+                            <input id="input-diskon" type="number" min="0" max="100" placeholder="0"
+                                class="w-20 text-right text-sm font-semibold bg-white border border-zinc-200 rounded-lg px-3 py-1.5 tabular-nums placeholder:font-normal placeholder:text-zinc-300 focus:outline-none focus:border-zinc-900 transition-colors">
                         </div>
                         <div class="flex justify-between items-baseline border-t border-zinc-100 pt-3">
                             <span class="font-bold">Total</span>
