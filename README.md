@@ -1,58 +1,241 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🏪 Sistem POS (Point of Sale) — Project PKL
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistem Point of Sale (POS) berbasis web untuk manajemen toko retail/distributor, dibangun menggunakan **Laravel 13**, **Filament v5**, dan **PostgreSQL**.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📋 Daftar Isi
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- [Fitur Utama](#-fitur-utama)
+- [Tech Stack](#-tech-stack)
+- [Struktur Modul](#-struktur-modul)
+- [Instalasi & Setup](#-instalasi--setup)
+- [Konfigurasi](#%EF%B8%8F-konfigurasi)
+- [Penggunaan](#-penggunaan)
+- [Skema Database](#-skema-database)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## ✨ Fitur Utama
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 🖥️ Halaman Kasir (`/kasir`)
+- Antarmuka kasir modern untuk memproses transaksi penjualan
+- Pencarian barang real-time
+- Input jumlah & diskon per item
+- Pilihan metode pembayaran (Tunai, QRIS, Transfer)
+- Perhitungan otomatis subtotal, diskon, total neto, dan kembalian
+- Cetak/preview struk transaksi
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 📊 Dashboard Admin (`/admin`)
+- **4 Stat Cards**: Penjualan Hari Ini, Penjualan Bulan Ini, Pembelian Bulan Ini, Stok Menipis
+- **Grafik Omset Penjualan** (7 hari terakhir) — Line chart hijau
+- **Grafik Modal Pembelian** (7 hari terakhir) — Line chart oranye
+- **Pop-up SweetAlert Stok Menipis** — Muncul otomatis sekali setelah login jika ada barang stok ≤ 5 pcs
+- Klik card "Stok Menipis" untuk melihat rincian barang kapan saja
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### 📦 Manajemen Data (CRUD)
+| Modul | Deskripsi |
+|---|---|
+| **Barang** | Kelola data barang, harga jual, satuan, relasi jenis & gudang |
+| **Jenis Barang** | Kategori/klasifikasi barang |
+| **Gudang** | Data gudang penyimpanan |
+| **Supplier** | Data pemasok barang |
+| **Customer** | Data pelanggan (opsional, untuk transaksi member) |
 
-## Agentic Development
+### 📄 Laporan & Riwayat (Read-Only dengan Detail Modal)
+| Modul | Deskripsi |
+|---|---|
+| **Barang Keluar (Penjualan)** | Riwayat transaksi penjualan dari kasir. Klik baris untuk lihat detail nota |
+| **Barang Masuk (Pembelian)** | Riwayat & input transaksi pembelian dari supplier. Klik baris untuk lihat detail |
+| **Perpindahan Barang** | Transfer stok antar gudang |
+| **Kartu Stok** | Buku mutasi stok barang (masuk/keluar/pindah). Klik baris untuk lihat detail |
+| **Riwayat Aktivitas** | Audit log perubahan data (via Spatie Activity Log) |
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### 🔔 Fitur Tambahan
+- **Zona waktu WIB** (Asia/Jakarta) di seluruh sistem
+- **SPA Mode** — Navigasi halaman admin tanpa full reload
+- **Dark Theme** pada seluruh modal detail
+- **Badge warna** untuk jenis pembayaran (Tunai/QRIS/Transfer/Tempo)
+- **Validasi stok otomatis** — Hapus pembelian/penjualan otomatis rollback stok
 
-```bash
-composer require laravel/boost --dev
+---
 
-php artisan boost:install
+## 🛠️ Tech Stack
+
+| Komponen | Teknologi |
+|---|---|
+| **Backend** | PHP 8.3+, Laravel 13 |
+| **Admin Panel** | Filament v5 |
+| **Frontend Kasir** | Vanilla JavaScript + Vite |
+| **Database** | PostgreSQL |
+| **Activity Log** | Spatie Laravel Activity Log v5 |
+| **Pop-up Alert** | SweetAlert2 (CDN) |
+| **Styling** | Filament UI (Admin), Custom CSS (Kasir) |
+
+---
+
+## 📁 Struktur Modul
+
+```
+app/
+├── Filament/
+│   ├── Resources/
+│   │   ├── Activities/          # Riwayat Aktivitas
+│   │   ├── Barangs/             # Master Barang
+│   │   ├── Customers/           # Master Customer
+│   │   ├── Gudangs/             # Master Gudang
+│   │   ├── JenisBarangs/        # Master Jenis Barang
+│   │   ├── KartuStoks/          # Kartu Stok (read-only)
+│   │   ├── Pembelians/          # Barang Masuk (Pembelian)
+│   │   ├── Penjualans/          # Barang Keluar (Penjualan)
+│   │   ├── PerpindahanBarangs/  # Perpindahan Antar Gudang
+│   │   └── Suppliers/           # Master Supplier
+│   └── Widgets/
+│       ├── StatsOverviewWidget.php      # 4 Stat Cards Dashboard
+│       ├── PenjualanChartWidget.php     # Grafik Penjualan
+│       └── PembelianChartWidget.php     # Grafik Pembelian
+├── Http/Controllers/
+│   └── KasirController.php     # Controller halaman kasir
+├── Models/                      # 13 Eloquent Models
+├── Services/
+│   └── StokService.php         # Logic stok: catat kartu, validasi, rollback
+└── Providers/
+    └── Filament/
+        └── AdminPanelProvider.php  # Konfigurasi panel admin
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+## 🚀 Instalasi & Setup
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Prasyarat
+- PHP 8.3+
+- Composer
+- Node.js & NPM
+- PostgreSQL
 
-## Code of Conduct
+### Langkah Instalasi
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+# 1. Clone repository
+git clone <repository-url>
+cd Project-PKL
 
-## Security Vulnerabilities
+# 2. Install dependensi PHP
+composer install
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# 3. Install dependensi JavaScript
+npm install
 
-## License
+# 4. Salin file environment
+cp .env.example .env
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# 5. Generate application key
+php artisan key:generate
+
+# 6. Konfigurasi database di .env (lihat bagian Konfigurasi)
+
+# 7. Jalankan migrasi database
+php artisan migrate
+
+# 8. (Opsional) Jalankan seeder jika tersedia
+php artisan db:seed
+
+# 9. Build asset frontend
+npm run build
+
+# 10. Jalankan server development
+php artisan serve
+```
+
+---
+
+## ⚙️ Konfigurasi
+
+### File `.env` — Variabel Penting
+
+```env
+# Aplikasi
+APP_NAME=Laravel
+APP_URL=http://127.0.0.1:8000
+APP_TIMEZONE=Asia/Jakarta
+APP_LOCALE=id
+
+# Database (PostgreSQL)
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=nama_database
+DB_USERNAME=username
+DB_PASSWORD=password
+```
+
+### Zona Waktu
+Seluruh sistem menggunakan **WIB (Asia/Jakarta)**. Konfigurasi ini diatur di:
+- `config/app.php` → `timezone` & `locale`
+- Semua kolom tanggal di tabel Filament menggunakan `.timezone('Asia/Jakarta')`
+
+---
+
+## 💡 Penggunaan
+
+### Akses Halaman
+
+| Halaman | URL | Keterangan |
+|---|---|---|
+| **Admin Panel** | `/admin` | Login → Dashboard, kelola semua data |
+| **Halaman Kasir** | `/kasir` | Interface kasir untuk transaksi penjualan |
+
+### Alur Kerja Utama
+
+1. **Setup Data Master** → Tambahkan Gudang, Supplier, Jenis Barang, lalu Barang
+2. **Input Pembelian** → Tambah transaksi Barang Masuk dari Supplier (stok otomatis bertambah)
+3. **Proses Penjualan** → Buka halaman Kasir (`/kasir`), scan/cari barang, proses pembayaran
+4. **Monitor Dashboard** → Cek omset harian, grafik tren, dan peringatan stok menipis
+5. **Audit Stok** → Buka Kartu Stok untuk melihat riwayat lengkap mutasi setiap barang
+
+---
+
+## 🗄️ Skema Database
+
+### Tabel Utama
+
+| Tabel | Deskripsi |
+|---|---|
+| `barang` | Master data barang |
+| `jenis_barang` | Kategori/jenis barang |
+| `gudang` | Data gudang penyimpanan |
+| `barang_gudang` | Pivot: stok barang per gudang |
+| `supplier` | Data pemasok |
+| `customer` | Data pelanggan |
+| `pembelian` | Header transaksi pembelian |
+| `detail_beli` | Detail item per pembelian |
+| `penjualan` | Header transaksi penjualan |
+| `detail_jual` | Detail item per penjualan |
+| `perpindahan_barang` | Header perpindahan antar gudang |
+| `perpindahan_barang_detail` | Detail item perpindahan |
+| `kartu_stok` | Log mutasi stok (masuk/keluar/pindah) |
+| `activity_log` | Audit trail (Spatie) |
+| `users` | Data pengguna/admin |
+
+### Relasi Utama
+
+```
+Barang ──┬── belongsToMany ── Gudang (via barang_gudang + stok)
+         ├── belongsTo ─── JenisBarang
+         └── hasMany ───── KartuStok
+
+Pembelian ──┬── belongsTo ── Supplier, Gudang, User
+            └── hasMany ──── DetailBeli → belongsTo Barang
+
+Penjualan ──┬── belongsTo ── Customer (nullable), Gudang, User
+            └── hasMany ──── DetailJual → belongsTo Barang
+
+KartuStok ── belongsTo ── Barang, Gudang
+```
+
+---
+
+## 📝 Lisensi
+
+Project ini dibuat untuk keperluan **Praktik Kerja Lapangan (PKL)**.
