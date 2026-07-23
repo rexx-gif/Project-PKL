@@ -171,54 +171,64 @@
                         </div>
                     </div>
 
-                    <div class="flex gap-1 bg-zinc-200/60 rounded-xl p-1">
-                        @foreach (['tunai' => 'Tunai', 'qris' => 'QRIS', 'transfer' => 'Transfer'] as $val => $label)
-                            <label class="flex-1 text-center text-sm font-semibold text-zinc-500 rounded-lg py-2 cursor-pointer transition
-                                          has-checked:bg-white has-checked:text-zinc-900 has-checked:shadow-sm">
-                                <input type="radio" name="jenis_pembayaran" value="{{ $val }}"
-                                    class="hidden" {{ $val === 'tunai' ? 'checked' : '' }}>
-                                {{ $label }}
-                            </label>
-                        @endforeach
-                    </div>
+                    <button id="btn-toggle-payment" type="button"
+                        class="w-full flex items-center justify-between text-[11px] font-bold text-zinc-400 hover:text-zinc-600 transition-colors py-1.5 cursor-pointer select-none border-t border-zinc-100 pt-3.5">
+                        <span>PILIHAN & RINCIAN PEMBAYARAN</span>
+                        <svg id="icon-toggle-payment" class="w-4 h-4 transition-transform duration-200" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 6l4 4 4-4"/>
+                        </svg>
+                    </button>
 
-                    <div id="row-tunai" class="space-y-2.5 text-sm">
-                        <div class="flex justify-between items-center">
-                            <span class="text-zinc-500">Uang diterima</span>
-                            <input id="input-bayar" type="number" min="0" placeholder="Rp 0"
-                                class="w-32 text-right text-sm font-semibold bg-white border border-zinc-200 rounded-lg px-3 py-1.5 tabular-nums placeholder:font-normal placeholder:text-zinc-300 focus:outline-none focus:border-zinc-900 transition-colors">
+                    <div id="payment-details-container" class="space-y-4 hidden">
+                        <div class="flex gap-1 bg-zinc-200/60 rounded-xl p-1">
+                            @foreach (['tunai' => 'Tunai', 'qris' => 'QRIS', 'transfer' => 'Transfer'] as $val => $label)
+                                <label class="flex-1 text-center text-sm font-semibold text-zinc-500 rounded-lg py-2 cursor-pointer transition
+                                              has-checked:bg-white has-checked:text-zinc-900 has-checked:shadow-sm">
+                                    <input type="radio" name="jenis_pembayaran" value="{{ $val }}"
+                                        class="hidden" {{ $val === 'tunai' ? 'checked' : '' }}>
+                                    {{ $label }}
+                                </label>
+                            @endforeach
                         </div>
-                        <button id="btn-uang-pas"
-                            class="w-full text-xs font-semibold text-zinc-600 bg-white border border-zinc-200 hover:border-zinc-900 hover:text-zinc-900 rounded-lg py-2 tabular-nums transition-colors">Uang pas</button>
-                        <div class="flex justify-between items-center">
-                            <span class="text-zinc-500">Kembalian</span>
-                            <span id="lbl-kembalian" class="font-bold tabular-nums">Rp 0</span>
-                        </div>
-                    </div>
 
-                    {{-- QRIS: QR dummy buat scan --}}
-                    <div id="row-qris" style="display:none">
-                        <div class="bg-white border border-zinc-200 rounded-xl p-4 flex items-center gap-4">
-                            <img src="{{ asset('img/pay/qris-dummy.png') }}" alt="Kode QRIS"
-                                class="w-24 h-24 rounded-lg border border-zinc-100 [image-rendering:pixelated]">
-                            <div class="min-w-0">
-                                <img src="{{ asset('img/pay/qris.svg') }}" alt="QRIS" class="h-5 mb-1.5">
-                                <p class="text-xs font-semibold text-zinc-900">Scan untuk membayar</p>
-                                <p class="text-xs text-zinc-400 mt-0.5">Kode contoh, bukan pembayaran sungguhan</p>
+                        <div id="row-tunai" class="space-y-2.5 text-sm">
+                            <div class="flex justify-between items-center">
+                                <span class="text-zinc-500">Uang diterima</span>
+                                <input id="input-bayar" type="number" min="0" placeholder="Rp 0"
+                                    class="w-32 text-right text-sm font-semibold bg-white border border-zinc-200 rounded-lg px-3 py-1.5 tabular-nums placeholder:font-normal placeholder:text-zinc-300 focus:outline-none focus:border-zinc-900 transition-colors">
+                            </div>
+                            <button id="btn-uang-pas"
+                                class="w-full text-xs font-semibold text-zinc-600 bg-white border border-zinc-200 hover:border-zinc-900 hover:text-zinc-900 rounded-lg py-2 tabular-nums transition-colors">Uang pas</button>
+                            <div class="flex justify-between items-center">
+                                <span class="text-zinc-500">Kembalian</span>
+                                <span id="lbl-kembalian" class="font-bold tabular-nums">Rp 0</span>
                             </div>
                         </div>
-                    </div>
 
-                    {{-- Transfer: pilih bank tujuan --}}
-                    <div id="row-transfer" style="display:none" class="grid grid-cols-2 gap-2">
-                        @foreach (['bca' => 'BCA', 'mandiri' => 'Mandiri', 'bri' => 'BRI', 'bni' => 'BNI'] as $kode => $nama)
-                            <label class="bank-opt bg-white border border-zinc-200 rounded-xl px-3 py-2.5 flex items-center justify-center cursor-pointer transition
-                                          hover:border-zinc-400 has-checked:border-zinc-900 has-checked:ring-1 has-checked:ring-zinc-900">
-                                <input type="radio" name="bank_transfer" value="{{ $nama }}"
-                                    class="hidden" {{ $kode === 'bca' ? 'checked' : '' }}>
-                                <img src="{{ asset('img/pay/' . $kode . '.svg') }}" alt="{{ $nama }}" class="h-5 max-w-full object-contain">
-                            </label>
-                        @endforeach
+                        {{-- QRIS: QR dummy buat scan --}}
+                        <div id="row-qris" style="display:none">
+                            <div class="bg-white border border-zinc-200 rounded-xl p-4 flex items-center gap-4">
+                                <img src="{{ asset('img/pay/qris-dummy.png') }}" alt="Kode QRIS"
+                                    class="w-24 h-24 rounded-lg border border-zinc-100 [image-rendering:pixelated]">
+                                <div class="min-w-0">
+                                    <img src="{{ asset('img/pay/qris.svg') }}" alt="QRIS" class="h-5 mb-1.5">
+                                    <p class="text-xs font-semibold text-zinc-900">Scan untuk membayar</p>
+                                    <p class="text-xs text-zinc-400 mt-0.5">Kode contoh, bukan pembayaran sungguhan</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Transfer: pilih bank tujuan --}}
+                        <div id="row-transfer" style="display:none" class="grid grid-cols-2 gap-2">
+                            @foreach (['bca' => 'BCA', 'mandiri' => 'Mandiri', 'bri' => 'BRI', 'bni' => 'BNI'] as $kode => $nama)
+                                <label class="bank-opt bg-white border border-zinc-200 rounded-xl px-3 py-2.5 flex items-center justify-center cursor-pointer transition
+                                              hover:border-zinc-400 has-checked:border-zinc-900 has-checked:ring-1 has-checked:ring-zinc-900">
+                                    <input type="radio" name="bank_transfer" value="{{ $nama }}"
+                                        class="hidden" {{ $kode === 'bca' ? 'checked' : '' }}>
+                                    <img src="{{ asset('img/pay/' . $kode . '.svg') }}" alt="{{ $nama }}" class="h-5 max-w-full object-contain">
+                                </label>
+                            @endforeach
+                        </div>
                     </div>
 
                     <button id="btn-bayar"

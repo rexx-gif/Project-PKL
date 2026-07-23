@@ -31,6 +31,7 @@ const state = {
     jenisPembayaran: 'tunai',
     bankTransfer: 'BCA',
     bayar: 0,
+    paymentExpanded: false,
 };
 
 const rupiah = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
@@ -144,7 +145,28 @@ function resetTransaksi() {
     state.diskonTransaksi = 0;
     state.bayar = 0;
     state.jenisPembayaran = 'tunai';
+    togglePaymentDetails(false);
     render();
+}
+
+function togglePaymentDetails(forceState) {
+    const container = document.getElementById('payment-details-container');
+    const chevron = document.getElementById('icon-toggle-payment');
+    if (!container || !chevron) return;
+
+    if (forceState !== undefined) {
+        state.paymentExpanded = forceState;
+    } else {
+        state.paymentExpanded = !state.paymentExpanded;
+    }
+
+    if (state.paymentExpanded) {
+        container.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+    } else {
+        container.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+    }
 }
 
 // ------------------------- BAYAR -------------------------
@@ -159,7 +181,17 @@ async function prosesBayar() {
         return;
     }
     if (state.jenisPembayaran === 'tunai' && state.bayar < totalNeto()) {
+        if (!state.paymentExpanded) {
+            togglePaymentDetails(true);
+        }
         toast('Uang bayar kurang dari total', true);
+        setTimeout(() => {
+            const inputBayar = document.getElementById('input-bayar');
+            if (inputBayar) {
+                inputBayar.focus();
+                inputBayar.select();
+            }
+        }, 150);
         return;
     }
 
@@ -338,7 +370,7 @@ function renderCart() {
     } else {
         wrap.innerHTML = state.cart
             .map(
-                (i) => `<div class="flex items-center gap-3 py-3.5 border-b border-zinc-100 last:border-0">
+                (i) => `<div class="flex items-center gap-3 py-2.5 border-b border-zinc-100 last:border-0">
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-bold truncate">${i.nama_barang}</p>
                     <p class="text-xs text-zinc-400 tabular-nums mt-0.5">${rupiah(i.harga)} / ${i.satuan}</p>
@@ -610,6 +642,9 @@ async function init() {
     });
 
     // aksi
+    document.getElementById('btn-toggle-payment').addEventListener('click', () => {
+        togglePaymentDetails();
+    });
     document.getElementById('btn-bayar').addEventListener('click', prosesBayar);
     document.getElementById('btn-reset').addEventListener('click', resetTransaksi);
     document.getElementById('btn-tutup-struk').addEventListener('click', () => {
