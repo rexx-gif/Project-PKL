@@ -67,6 +67,7 @@ class PembeliansTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
+            ->recordUrl(null)
             ->recordAction('view_detail')
             ->filters([
                 SelectFilter::make('supplier_id')

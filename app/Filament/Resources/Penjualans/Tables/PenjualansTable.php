@@ -65,6 +65,7 @@ class PenjualansTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
+            ->recordUrl(null)
             ->recordAction('view_detail')
             ->filters([
                 SelectFilter::make('gudang_id')
