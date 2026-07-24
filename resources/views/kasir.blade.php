@@ -111,6 +111,19 @@
                         class="hidden anim-scale-in absolute right-0 top-full mt-2 min-w-full w-max max-h-72 overflow-y-auto z-30 bg-white border border-zinc-200 rounded-xl shadow-xl shadow-zinc-950/10 p-1.5">
                     </div>
                 </div>
+
+                {{-- Tombol Logout --}}
+                <form method="POST" action="{{ route('kasir.logout') }}">
+                    @csrf
+                    <button type="submit" title="Logout"
+                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-zinc-200 text-zinc-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all duration-200 cursor-pointer">
+                        <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"/>
+                            <path d="M9 12h12l-3 -3"/>
+                            <path d="M18 15l3 -3"/>
+                        </svg>
+                    </button>
+                </form>
             </div>
         </header>
 

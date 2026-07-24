@@ -11,10 +11,59 @@ use App\Models\KartuStok;
 use App\Models\Penjualan;
 use App\Services\StokService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class KasirController extends Controller
 {
+    /**
+     * Tampilkan halaman login kasir.
+     */
+    public function showLogin()
+    {
+        if (Auth::check()) {
+            return redirect()->route('kasir');
+        }
+
+        return view('kasir-login');
+    }
+
+    /**
+     * Proses login kasir.
+     */
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ]);
+
+        // coba login pakai email atau name (biar "Username or Email" beneran jalan)
+        $loginField = filter_var($credentials['email'], FILTER_VALIDATE_EMAIL) ? 'email' : 'name';
+
+        if (Auth::attempt([$loginField => $credentials['email'], 'password' => $credentials['password']], $request->boolean('remember'))) {
+            $request->session()->regenerate();
+
+            return redirect()->intended(route('kasir'));
+        }
+
+        return back()->withErrors([
+            'email' => 'Email/username atau password salah.',
+        ])->onlyInput('email');
+    }
+
+    /**
+     * Logout kasir.
+     */
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('kasir.login');
+    }
+
     /**
      * Halaman kasir. Data langsung disuntik ke Blade (tanpa API),
      * nanti dibaca JavaScript lewat window.KASIR_DATA.
